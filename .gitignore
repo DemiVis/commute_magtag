@@ -1,0 +1,5 @@
+adafruit-circuitpython-bundle-**
+settings.toml
+boot_out.txt
+**.bak
+lib/**

@@ -5,8 +5,7 @@ Fetches Google Routes API commute times and displays them on the top half
 of the E-Ink display. Changes MagTag NeoPixels from Green (Good) to Red (Bad).
 Leaves bottom half available for future expansions (e.g., train schedules).
 
-Uses deep sleep between updates to save power. The e-ink display retains its
-image without power, so this is safe and efficient.
+Uses regular sleep (not deep sleep) between updates so NeoPixels stay on.
 
 Dependencies (in /lib):
 Folders:
@@ -28,8 +27,8 @@ Files:
 - simpleio.mpy
 
 Settings (in /settings.toml):
-- WIFI_SSID
-- WIFI_PASSWORD
+- CIRCUITPY_WIFI_SSID
+- CIRCUITPY_WIFI_PASSWORD
 - GOOGLE_ROUTES_API_KEY
 - ORIGIN_ADDRESS
 - DEST_ADDRESS
@@ -39,7 +38,10 @@ Settings (in /settings.toml):
 """
 
 import os
+import time
 from adafruit_magtag.magtag import MagTag
+
+BRIGHTNESS_PER = 10 # Percentage, 0-100
 
 # ==========================================
 # HARDWARE & DISPLAY SETUP
@@ -127,6 +129,7 @@ def update_leds(commute_mins):
     red = int(ratio * 255)
     green = int((1.0 - ratio) * 255)
     magtag.peripherals.neopixels.fill((red, green, 0))
+    magtag.peripherals.neopixels.brightness = BRIGHTNESS_PER / 100.0
     magtag.peripherals.neopixel_disable = False
 
 
@@ -138,22 +141,24 @@ def update_display(commute_mins):
 
 
 # ==========================================
-# MAIN
+# MAIN LOOP
 # ==========================================
 
-commute_mins = get_commute_time()
-
-if commute_mins is not None:
-    print(f"Current commute: {commute_mins:.1f} minutes")
-    update_leds(commute_mins)
-    update_display(commute_mins)
-else:
-    magtag.peripherals.neopixels.fill((0, 0, 255))  # Blue = error state
-    magtag.peripherals.neopixel_disable = False
-    magtag.set_text("[CAR]", 0, auto_refresh=False)
-    magtag.set_text("API Error", 1, auto_refresh=False)
-    magtag.set_text("Train: --:--", 2, auto_refresh=True)
-
 interval = int(os.getenv("UPDATE_INTERVAL", "600"))
-print(f"Sleeping for {interval} seconds (deep sleep)...")
-magtag.exit_and_deep_sleep(interval)
+
+while True:
+    commute_mins = get_commute_time()
+
+    if commute_mins is not None:
+        print(f"Current commute: {commute_mins:.1f} minutes")
+        update_leds(commute_mins)
+        update_display(commute_mins)
+    else:
+        magtag.peripherals.neopixels.fill((0, 0, 255))  # Blue = error state
+        magtag.peripherals.neopixel_disable = False
+        magtag.set_text("[CAR]", 0, auto_refresh=False)
+        magtag.set_text("API Error", 1, auto_refresh=False)
+        magtag.set_text("Train: --:--", 2, auto_refresh=True)
+
+    print(f"Sleeping for {interval} seconds...")
+    time.sleep(interval)

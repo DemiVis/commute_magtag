@@ -27,21 +27,24 @@ Files:
 - simpleio.mpy
 
 Settings (in /settings.toml):
-- CIRCUITPY_WIFI_SSID
-- CIRCUITPY_WIFI_PASSWORD
-- GOOGLE_ROUTES_API_KEY
-- ORIGIN_ADDRESS
-- DEST_ADDRESS
-- GOOD_COMMUTE_MINS  (default: 45)
-- BAD_COMMUTE_MINS   (default: 70)
-- UPDATE_INTERVAL    (seconds, default: 600)
+- CIRCUITPY_WIFI_SSID       WiFi network name (read by adafruit_portalbase)
+- CIRCUITPY_WIFI_PASSWORD   WiFi password (read by adafruit_portalbase)
+- GOOGLE_ROUTES_API_KEY     Google Routes API v2 key
+- ORIGIN_ADDRESS            Commute start address or Plus Code
+- DEST_ADDRESS              Commute end address or Plus Code
+- GOOD_COMMUTE_MINS         Minutes at or below which LEDs are full green (default: 45)
+- BAD_COMMUTE_MINS          Minutes at or above which LEDs are full red (default: 70)
+- UPDATE_INTERVAL           Seconds between API polls (default: 600)
+
+Constants (edit in code.py):
+- BRIGHTNESS_PER            NeoPixel brightness, 0-100 percent (default: 10)
 """
 
 import os
 import time
 from adafruit_magtag.magtag import MagTag
 
-BRIGHTNESS_PER = 10 # Percentage, 0-100
+BRIGHTNESS_PER = 10  # NeoPixel brightness percentage (0-100)
 
 # ==========================================
 # HARDWARE & DISPLAY SETUP
@@ -115,7 +118,7 @@ def get_commute_time():
 
 
 def update_leds(commute_mins):
-    """Linearly interpolates LED colors from Green (good) to Red (bad)."""
+    """Linearly interpolates LED colors from Green (good) to Red (bad) at BRIGHTNESS_PER brightness."""
     good = float(os.getenv("GOOD_COMMUTE_MINS", "45"))
     bad = float(os.getenv("BAD_COMMUTE_MINS", "70"))
 
